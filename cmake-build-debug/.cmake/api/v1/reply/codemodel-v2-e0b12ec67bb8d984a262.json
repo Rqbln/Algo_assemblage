@@ -1,0 +1,60 @@
+{
+	"configurations" : 
+	[
+		{
+			"directories" : 
+			[
+				{
+					"build" : ".",
+					"jsonFile" : "directory-.-Debug-f5ebdc15457944623624.json",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.26"
+					},
+					"projectIndex" : 0,
+					"source" : ".",
+					"targetIndexes" : 
+					[
+						0
+					]
+				}
+			],
+			"name" : "Debug",
+			"projects" : 
+			[
+				{
+					"directoryIndexes" : 
+					[
+						0
+					],
+					"name" : "Algo_assemblage",
+					"targetIndexes" : 
+					[
+						0
+					]
+				}
+			],
+			"targets" : 
+			[
+				{
+					"directoryIndex" : 0,
+					"id" : "Algo_assemblage::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-Algo_assemblage-Debug-d6bfa386fdd959c5a03f.json",
+					"name" : "Algo_assemblage",
+					"projectIndex" : 0
+				}
+			]
+		}
+	],
+	"kind" : "codemodel",
+	"paths" : 
+	{
+		"build" : "/home/rqbin/Documents/ECE/ECE ING 2/Th\u00e9orie des graphes/Projet_S1/Algo_assemblage/cmake-build-debug",
+		"source" : "/home/rqbin/Documents/ECE/ECE ING 2/Th\u00e9orie des graphes/Projet_S1/Algo_assemblage"
+	},
+	"version" : 
+	{
+		"major" : 2,
+		"minor" : 5
+	}
+}
