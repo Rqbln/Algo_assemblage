@@ -1,0 +1,63 @@
+=========================
+SCENARIO DE TEST
+=========================
+
+DONNÉES D'ENTRÉE:
+
+1. Ensemble des opérations (V):
+   - poser circuit
+   - peindre carrosserie
+   - monter moteur
+   - poser carrosserie
+   - monter roues
+
+2. Contraintes d'exclusion (E):
+   - poser circuit, peindre carrosserie
+   - monter moteur, poser carrosserie
+
+   Note: Cela signifie que "poser circuit" et "peindre carrosserie" ne peuvent pas être affectées à la même station, de même pour "monter moteur" et "poser carrosserie".
+
+3. Contraintes de précédence (A):
+   - poser carrosserie, monter moteur
+   - monter moteur, poser circuit
+   - poser carrosserie, monter roues
+
+   Note: Cela signifie que la "carrosserie" doit être posée avant de "monter le moteur" ou de "monter les roues", et que le "moteur" doit être monté avant de "poser le circuit".
+
+4. Durée d'exécution de chaque opération:
+   - poser circuit: 4s
+   - peindre carrosserie: 6s
+   - monter moteur: 5s
+   - poser carrosserie: 3s
+   - monter roues: 4s
+
+5. Temps de cycle (T0):
+   - T0 = 10s
+
+EXÉCUTION DU PROGRAMME:
+Lors de l'exécution du programme avec ces données d'entrée, celui-ci devrait:
+   - Prendre en compte toutes les contraintes.
+   - Répartir les opérations entre les stations de manière à optimiser le nombre de stations tout en respectant les contraintes.
+
+RÉSULTATS ATTENDUS:
+Possible sortie:
+   - Station 1:
+     - poser carrosserie (3s)
+     - monter roues (4s)
+   - Station 2:
+     - monter moteur (5s)
+     - poser circuit (4s)
+   - Station 3:
+     - peindre carrosserie (6s)
+
+Le programme devrait également indiquer que 3 stations sont nécessaires pour respecter toutes les contraintes et le temps de cycle donné.
+
+VALIDATION:
+   - Vérifier que les contraintes d'exclusion sont respectées.
+   - Assurer que les contraintes de précédence sont respectées.
+   - Vérifier que le temps total des opérations dans chaque station ne dépasse pas le temps de cycle T0.
+   - Tester en ajoutant/modifiant des opérations, des contraintes, ou des durées d'opération pour observer l'adaptation du programme.
+
+NOTE:
+Il est recommandé d'avoir plusieurs scénarios de test pour tester différents cas et s'assurer que le programme fonctionne correctement dans toutes les situations.
+

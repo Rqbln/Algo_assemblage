@@ -5,4 +5,6 @@ set(CMAKE_C_STANDARD 23)
 
 add_executable(Algo_assemblage main.c
         sprog.c
-        sprog.h)
+        sprog.h
+        donneesEntrees.c
+        donneesEntrees.h)

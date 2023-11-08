@@ -1,6 +1,7 @@
 #include <stdio.h>
+#include "donneesEntrees.h"
 
 int main() {
-    printf("Hello, World!\n");
+    saisirDonnees(); // Appeler la fonction de saisie des données
     return 0;
 }
