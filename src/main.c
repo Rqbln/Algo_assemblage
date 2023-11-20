@@ -67,3 +67,12 @@ int main(void) {
 
     return 0;
 }
+
+/*
+ GLPK Simplex Optimizer, v4.65
+2 rows, 2 columns, 4 non-zeros
+*     0: obj =  -0.000000000e+00 inf =   0.000e+00 (2)
+*     2: obj =   6.400000000e+00 inf =   0.000e+00 (0)
+OPTIMAL LP SOLUTION FOUND
+z = 6.4; x = 2.8; y = 3.6
+ */
