@@ -4,7 +4,6 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include "donneesEntrees.h"
 
 #ifndef ALGO_ASSEMBLAGE_SPROG_H
 #define ALGO_ASSEMBLAGE_SPROG_H
