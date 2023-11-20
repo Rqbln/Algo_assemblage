@@ -1,10 +1,19 @@
 cmake_minimum_required(VERSION 3.26)
 project(Algo_assemblage C)
-
 set(CMAKE_C_STANDARD 23)
 
-add_executable(Algo_assemblage main.c
-        sprog.c
-        sprog.h
-        donneesEntrees.c
-        donneesEntrees.h)
+# Détection du système d'exploitation
+if(WIN32)
+    set(GLPK_LIB_DIR ${PROJECT_SOURCE_DIR}/lib/windows)
+elseif(UNIX AND NOT APPLE)
+    set(GLPK_LIB_DIR ${PROJECT_SOURCE_DIR}/lib/linux)
+endif()
+
+# Ajouter le répertoire des fichiers d'en-tête et des bibliothèques
+include_directories(${PROJECT_SOURCE_DIR}/include)
+link_directories(${GLPK_LIB_DIR})
+
+add_executable(Algo_assemblage main.c sprog.c sprog.h)
+
+# Lier avec la bibliothèque GLPK
+target_link_libraries(Algo_assemblage glpk)
