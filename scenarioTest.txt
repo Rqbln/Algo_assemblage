@@ -1,63 +1,67 @@
+
 =========================
-SCENARIO DE TEST
+SCENARIO DE TEST ÉTENDU
 =========================
 
 DONNÉES D'ENTRÉE:
 
 1. Ensemble des opérations (V):
-   - poser circuit
-   - peindre carrosserie
-   - monter moteur
-   - poser carrosserie
-   - monter roues
+   - Poser circuit électrique
+   - Peindre carrosserie
+   - Monter moteur
+   - Poser carrosserie
+   - Monter roues
+   - Installer sièges
+   - Assembler tableau de bord
+   - Monter système de freinage
+   - Ajouter composants électroniques
 
 2. Contraintes d'exclusion (E):
-   - poser circuit, peindre carrosserie
-   - monter moteur, poser carrosserie
+   - Poser circuit électrique, Peindre carrosserie
+   - Monter moteur, Poser carrosserie
+   - Installer sièges, Assembler tableau de bord
+   - Monter système de freinage, Ajouter composants électroniques
 
-   Note: Cela signifie que "poser circuit" et "peindre carrosserie" ne peuvent pas être affectées à la même station, de même pour "monter moteur" et "poser carrosserie".
+   Note: Cela signifie que ces opérations ne peuvent pas être affectées à la même station.
 
 3. Contraintes de précédence (A):
-   - poser carrosserie, monter moteur
-   - monter moteur, poser circuit
-   - poser carrosserie, monter roues
+   - Poser carrosserie, Monter moteur
+   - Monter moteur, Poser circuit électrique
+   - Poser carrosserie, Monter roues
+   - Assembler tableau de bord, Monter système de freinage
+   - Installer sièges, Ajouter composants électroniques
 
-   Note: Cela signifie que la "carrosserie" doit être posée avant de "monter le moteur" ou de "monter les roues", et que le "moteur" doit être monté avant de "poser le circuit".
+   Note: Cela signifie que certaines opérations doivent être effectuées avant d'autres.
 
 4. Durée d'exécution de chaque opération:
-   - poser circuit: 4s
-   - peindre carrosserie: 6s
-   - monter moteur: 5s
-   - poser carrosserie: 3s
-   - monter roues: 4s
+   - Poser circuit électrique: 4s
+   - Peindre carrosserie: 6s
+   - Monter moteur: 5s
+   - Poser carrosserie: 3s
+   - Monter roues: 4s
+   - Installer sièges: 3s
+   - Assembler tableau de bord: 2s
+   - Monter système de freinage: 3s
+   - Ajouter composants électroniques: 4s
 
 5. Temps de cycle (T0):
    - T0 = 10s
 
 EXÉCUTION DU PROGRAMME:
-Lors de l'exécution du programme avec ces données d'entrée, celui-ci devrait:
-   - Prendre en compte toutes les contraintes.
-   - Répartir les opérations entre les stations de manière à optimiser le nombre de stations tout en respectant les contraintes.
+Le programme doit prendre en compte toutes les contraintes et répartir les opérations entre les stations de manière à optimiser le nombre de stations.
 
 RÉSULTATS ATTENDUS:
-Possible sortie:
-   - Station 1:
-     - poser carrosserie (3s)
-     - monter roues (4s)
-   - Station 2:
-     - monter moteur (5s)
-     - poser circuit (4s)
-   - Station 3:
-     - peindre carrosserie (6s)
-
-Le programme devrait également indiquer que 3 stations sont nécessaires pour respecter toutes les contraintes et le temps de cycle donné.
+Une possible sortie pourrait être:
+   - Station 1: Poser carrosserie (3s), Monter roues (4s), Installer sièges (3s)
+   - Station 2: Monter moteur (5s), Poser circuit électrique (4s)
+   - Station 3: Peindre carrosserie (6s), Assembler tableau de bord (2s)
+   - Station 4: Monter système de freinage (3s), Ajouter composants électroniques (4s)
 
 VALIDATION:
    - Vérifier que les contraintes d'exclusion sont respectées.
    - Assurer que les contraintes de précédence sont respectées.
    - Vérifier que le temps total des opérations dans chaque station ne dépasse pas le temps de cycle T0.
-   - Tester en ajoutant/modifiant des opérations, des contraintes, ou des durées d'opération pour observer l'adaptation du programme.
+   - Tester différentes configurations de contraintes et de durées d'opération pour évaluer la flexibilité du programme.
 
 NOTE:
-Il est recommandé d'avoir plusieurs scénarios de test pour tester différents cas et s'assurer que le programme fonctionne correctement dans toutes les situations.
-
+Des scénarios de test variés sont recommandés pour s'assurer que le programme fonctionne correctement dans toutes les situations.
