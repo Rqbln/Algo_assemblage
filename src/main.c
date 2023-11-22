@@ -14,10 +14,10 @@ int main() {
 
     do {
         // Affichage du menu
-        printf("\nMenu de la chaîne d'assemblage\n");
+        printf("\nMenu de la chaine d'assemblage\n");
         printf("1. Afficher les exclusions\n");
-        printf("2. Afficher les précédences\n");
-        printf("3. Afficher les opérations\n");
+        printf("2. Afficher les precedences\n");
+        printf("3. Afficher les operations\n");
         printf("4. Afficher le temps de cycle\n");
         printf("5. Quitter\n");
         printf("Votre choix : ");
@@ -32,12 +32,12 @@ int main() {
                 break;
             case 2:
                 for (int i = 0; i < sizePrec; i++) {
-                    printf("%d) Précédence : %d -> %d\n",i,precedences[i].op1, precedences[i].op2);
+                    printf("%d) Precedence : %d -> %d\n",i,precedences[i].op1, precedences[i].op2);
                 }
                 break;
             case 3:
                 for (int i = 0; i < sizeOps; i++) {
-                    printf("Nom : %s  Durée = %f\n", operations[i].name, operations[i].duration);
+                    printf("Nom : %s  Duree = %f\n", operations[i].name, operations[i].duration);
                 }
                 break;
             case 4:
