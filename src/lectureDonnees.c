@@ -36,7 +36,7 @@ t_precedence* readPrecedences(const char* filename, int* size) {
     t_precedence* precedences = malloc(sizeof(t_precedence) * 100);
     int count = 0;
 
-    while (fscanf(file, "%d %d", &precedences[count].precedent, &precedences[count].subsequent) == 2) {
+    while (fscanf(file, "%d %d", &precedences[count].op1, &precedences[count].op2) == 2) {
         count++;
         if (count % 100 == 0) {
             precedences = realloc(precedences, sizeof(t_precedence) * (count + 100));
@@ -49,6 +49,7 @@ t_precedence* readPrecedences(const char* filename, int* size) {
 }
 
 
+
 t_operation* readOperations(const char* filename, int* size) {
     FILE* file = fopen(filename, "r");
     if (file == NULL) {
@@ -59,7 +60,7 @@ t_operation* readOperations(const char* filename, int* size) {
     t_operation* operations = malloc(sizeof(t_operation) * 100);
     int count = 0;
 
-    while (fscanf(file, "%d %f", &operations[count].id, &operations[count].duration) == 2) {
+    while (fscanf(file, "%s %f", operations[count].name, &operations[count].duration) == 2) {
         count++;
         if (count % 100 == 0) {
             operations = realloc(operations, sizeof(t_operation) * (count + 100));
@@ -70,6 +71,8 @@ t_operation* readOperations(const char* filename, int* size) {
     fclose(file);
     return operations;
 }
+
+
 
 
 
