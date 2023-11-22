@@ -12,8 +12,8 @@
 #endif //ALGO_ASSEMBLAGE_SPROG_H
 
 typedef struct operation {
-    int id;       // Identifiant de l'opération
-    float duration; // Durée de l'opération, en float
+    char name[50];  // Nom de l'opération
+    float duration; // Durée de l'opération
 } t_operation;
 
 
@@ -25,8 +25,8 @@ typedef struct exclusion{
 
 
 typedef struct precedence{
-    int precedent;  // Opération précédente
-    int subsequent; // Opération subséquente
+    int op1;
+    int op2;
 } t_precedence;
 
 
