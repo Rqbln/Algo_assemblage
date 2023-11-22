@@ -11,26 +11,30 @@
 
 #endif //ALGO_ASSEMBLAGE_SPROG_H
 
-typedef struct operations{
-    char poserCarrosserie[50];
-    char monterRoue[50];
-    char installerSiege[50];
-    char monterMoteur[50];
-    char poserCircuitElectrique[50];
-    char peindreCarrosserie[50];
-    char assemblerTableau[50];
-    char monterFreins[50];
-    char ajouterCompElectriques[50];
-    int duration;
-} t_operations;
+typedef struct operation {
+    int id;       // Identifiant de l'opération
+    float duration; // Durée de l'opération, en float
+} t_operation;
 
-typedef struct {
-    char operation1[50];
-    char operation2[50];
-} Exclusion;
 
-typedef struct {
-    char precedent[50];
-    char subsequent[50];
-} Precedence;
+
+typedef struct exclusion{
+    int op1;  // Première opération
+    int op2;  // Deuxième opération
+} t_exclusion;
+
+
+typedef struct precedence{
+    int precedent;  // Opération précédente
+    int subsequent; // Opération subséquente
+} t_precedence;
+
+
+void afficherMenu();
+void afficherMatrice(int **matrice, int nbLignes, int nbColonnes);
+
+t_exclusion* readExclusions(const char* filename, int* size);
+t_precedence* readPrecedences(const char* filename, int* size);
+t_operation* readOperations(const char* filename, int* size);
+float readCycleTime(const char* filename);
 

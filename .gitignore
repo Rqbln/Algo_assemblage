@@ -1,0 +1,8 @@
+# Ignorer tout
+*
+
+# Ne pas ignorer les dossiers et fichiers spécifiques
+!.gitignore
+!CMakeLists.txt
+!src/
+!src/*  # Ajouter ceci si vous voulez inclure les fichiers dans /src
