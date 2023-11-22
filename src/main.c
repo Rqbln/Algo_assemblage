@@ -23,35 +23,31 @@ int main() {
         printf("Votre choix : ");
         scanf("%d", &choice);
 
-        // Gestion des choix
+        // Traitement des choix
         switch(choice) {
             case 1:
-                // Affichage des exclusions
                 for (int i = 0; i < sizeExcl; i++) {
-                    printf("Exclusion: %d - %d\n", exclusions[i].op1, exclusions[i].op2);
+                    printf("%d) Exclusion : %d - %d\n",i,exclusions[i].op1, exclusions[i].op2);
                 }
                 break;
             case 2:
-                // Affichage des precedences
                 for (int i = 0; i < sizePrec; i++) {
-                    printf("Precedence: %d -> %d\n", precedences[i].precedent, precedences[i].subsequent);
+                    printf("%d) Precedence : %d -> %d\n",i,precedences[i].op1, precedences[i].op2);
                 }
                 break;
             case 3:
-                // Affichage des operations
                 for (int i = 0; i < sizeOps; i++) {
-                    printf("Operation %d: Duree = %f\n", operations[i].id, operations[i].duration);
+                    printf("Nom : %s  Duree = %f\n", operations[i].name, operations[i].duration);
                 }
                 break;
             case 4:
-                // Affichage du temps de cycle
                 printf("Temps de cycle: %f\n", cycleTime);
                 break;
             case 5:
                 printf("Quitter\n");
                 break;
             default:
-                printf("Choix invalide. Veuillez reessayer.\n");
+                printf("Choix invalide. Veuillez réessayer.\n");
         }
     } while (choice != 5);
 
