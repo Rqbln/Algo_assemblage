@@ -10,6 +10,13 @@ int main() {
     t_operation* operations = readOperations("../Donnees/operations.txt", &sizeOps);
     float cycleTime = readCycleTime("../Donnees/temps_cycle.txt");
 
+    // Structures pour les paramètres
+    glp_smcp smcp;
+    glp_iocp iocp;
+
+    // Configurer GLPK pour désactiver les messages de sortie
+    configureGLPK(&smcp, &iocp);
+
     int choice;
 
     do {
@@ -45,11 +52,11 @@ int main() {
                 printf("Temps de cycle: %f\n", cycleTime);
                 break;
             case 5:
-                solveAssemblyLineProblem(cycleTime, sizeOps, operations, regleExclusions,sizeExcl);
+                solveAssemblyLineProblem(cycleTime, sizeOps, operations, regleExclusions, sizeExcl, &smcp, &iocp);
 
                 break;
             case 6:
-                printf("Quitter\n");
+                printf("Au revoir !\n");
                 break;
             default:
                 printf("Choix invalide. Veuillez réessayer.\n");

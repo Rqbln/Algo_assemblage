@@ -17,7 +17,16 @@ t_Exclusion** initExclusionMatrix(int numOperations, int numStations) {
     return matrix;
 }
 
-void solveAssemblyLineProblem(float cycleTime, int num_operations, t_operation* operations, t_regleExclusion* exclusions, int sizeExcl) {
+// Définition de la fonction
+void configureGLPK(glp_smcp *smcp, glp_iocp *iocp) {
+    glp_init_smcp(smcp);
+    smcp->msg_lev = GLP_MSG_OFF;
+
+    glp_init_iocp(iocp);
+    iocp->msg_lev = GLP_MSG_OFF;
+}
+
+void solveAssemblyLineProblem(float cycleTime, int num_operations, t_operation* operations, t_regleExclusion* exclusions, int sizeExcl, glp_smcp *smcp, glp_iocp *iocp) {
     glp_prob *lp;
     lp = glp_create_prob();
     glp_set_prob_name(lp, "assembly_line");
@@ -69,8 +78,8 @@ void solveAssemblyLineProblem(float cycleTime, int num_operations, t_operation* 
     }
 
     // Résoudre le problème
-    glp_simplex(lp, NULL);
-    glp_intopt(lp, NULL);
+    glp_simplex(lp, smcp);  // Utiliser les paramètres configurés
+    glp_intopt(lp, iocp);   // Utiliser les paramètres configurés
 
     // Afficher les résultats
     printf("\nEn prenant en compte les exclusions :\n");

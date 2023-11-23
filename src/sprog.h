@@ -43,5 +43,6 @@ t_reglePrecedence* readPrecedences(const char* filename, int* size);
 t_operation* readOperations(const char* filename, int* size);
 float readCycleTime(const char* filename);
 
-void solveAssemblyLineProblem(float cycleTime, int num_operations, t_operation* operations, t_regleExclusion* exclusions, int sizeExcl);
+void configureGLPK(glp_smcp *smcp, glp_iocp *iocp);
+void solveAssemblyLineProblem(float cycleTime, int num_operations, t_operation* operations, t_regleExclusion* exclusions, int sizeExcl, glp_smcp *smcp, glp_iocp *iocp);
 
