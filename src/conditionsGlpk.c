@@ -17,13 +17,12 @@ t_Exclusion** initExclusionMatrix(int numOperations, int numStations) {
     return matrix;
 }
 
-// Définition de la fonction
 void configureGLPK(glp_smcp *smcp, glp_iocp *iocp) {
     glp_init_smcp(smcp);
-    smcp->msg_lev = GLP_MSG_OFF;
+    smcp->msg_lev = GLP_MSG_ON; // Active les messages pour glp_simplex
 
     glp_init_iocp(iocp);
-    iocp->msg_lev = GLP_MSG_OFF;
+    iocp->msg_lev = GLP_MSG_OFF; // Garde les messages désactivés pour glp_intopt
 }
 
 void solveAssemblyLineProblem(float cycleTime, int num_operations, t_operation* operations, t_regleExclusion* exclusions, int sizeExcl, glp_smcp *smcp, glp_iocp *iocp) {
@@ -45,7 +44,7 @@ void solveAssemblyLineProblem(float cycleTime, int num_operations, t_operation* 
             char name[20];
             sprintf(name, "x%d,%d", i, j); // Nommer la variable pour l'identification.
             glp_set_col_name(lp, idx, name);
-            glp_set_obj_coef(lp, idx, 1.0); // Coefficient dans la fonction objectif (pour minimiser le nombre de stations).
+            glp_set_obj_coef(lp, idx, operations[i - 1].duration); // Coefficient dans la fonction objectif (pour minimiser le nombre de stations).
         }
     }
 
@@ -54,34 +53,90 @@ void solveAssemblyLineProblem(float cycleTime, int num_operations, t_operation* 
         int op1 = exclusions[k].op1;
         int op2 = exclusions[k].op2;
         for (int j = 1; j <= num_operations; j++) {
-            int idx = glp_add_rows(lp, 1); // Ajout d'une nouvelle contrainte pour chaque paire d'exclusion.
+            int idx = glp_add_rows(lp, 1);
             glp_set_row_name(lp, idx, "exclusion");
-            glp_set_row_bnds(lp, idx, GLP_UP, 0.0, 1.0); // La somme des variables pour cette paire ne doit pas dépasser 1.
+            glp_set_row_bnds(lp, idx, GLP_UP, 0.0, 1.0);
             int ind[3] = {0, (op1 - 1) * num_operations + j, (op2 - 1) * num_operations + j};
-            double val[3] = {0, 1.0, 1.0}; // Les coefficients des variables dans la contrainte.
-            glp_set_mat_row(lp, idx, 2, ind, val); // Définir la contrainte.
+            double val[3] = {0, 1.0, 1.0};
+            glp_set_mat_row(lp, idx, 2, ind, val);
         }
     }
+
 
     // Ajout des contraintes de temps de cycle (la somme des durées des opérations dans une station ne doit pas dépasser le temps de cycle).
     for (int j = 1; j <= num_operations; j++) {
         int idx = glp_add_rows(lp, 1);
         char name[20];
-        sprintf(name, "cycleTime%d", j); // Nommer la contrainte de temps de cycle.
+        sprintf(name, "cycleTime%d", j);
         glp_set_row_name(lp, idx, name);
-        glp_set_row_bnds(lp, idx, GLP_UP, 0.0, cycleTime); // La somme des durées ne doit pas dépasser cycleTime.
+        glp_set_row_bnds(lp, idx, GLP_UP, 0.0, cycleTime);
         int ind[num_operations + 1];
         double val[num_operations + 1];
         for (int i = 1; i <= num_operations; i++) {
-            ind[i] = (i - 1) * num_operations + j; // Index des variables.
-            val[i] = operations[i - 1].duration; // Durée de l'opération comme coefficient.
+            ind[i] = (i - 1) * num_operations + j;
+            val[i] = operations[i - 1].duration;
         }
-        glp_set_mat_row(lp, idx, num_operations, ind, val); // Définir la contrainte de temps de cycle.
+        glp_set_mat_row(lp, idx, num_operations, ind, val);
     }
 
+// Assurer l'Affectation des Opérations
+    for (int i = 1; i <= num_operations; i++) {
+        int idx = glp_add_rows(lp, 1);
+        glp_set_row_name(lp, idx, "assignOperation");
+        glp_set_row_bnds(lp, idx, GLP_LO, 1.0, 0.0);
+
+        int ind[num_operations + 1]; // Déclaration du tableau ind
+        double val[num_operations + 1]; // Déclaration du tableau val
+
+        for (int j = 1; j <= num_operations; j++) {
+            ind[j] = (i - 1) * num_operations + j;
+            val[j] = 1.0;
+        }
+        glp_set_mat_row(lp, idx, num_operations, ind, val);
+    }
+
+
+
     // Résolution du problème linéaire et entier.
-    glp_simplex(lp, smcp);  // Résolution LP avec les paramètres configurés.
-    glp_intopt(lp, iocp);   // Résolution MIP avec les paramètres configurés.
+    // Résolution du problème linéaire
+    int simplex_status = glp_simplex(lp, smcp);
+    if (simplex_status != 0) {
+        printf("Problème lors de la résolution simplex : %d\n", simplex_status);
+        // Vous pouvez choisir de retourner ou de continuer, selon votre cas d'utilisation
+    }
+
+    // Vérification du statut de la solution
+    int sol_status = glp_get_status(lp);
+    switch (sol_status) {
+        case GLP_OPT:
+            printf("Solution optimale trouvée\n");
+            break;
+        case GLP_FEAS:
+            printf("Solution faisable trouvée, mais non optimale\n");
+            break;
+        case GLP_INFEAS:
+            printf("Le modèle est non faisable\n");
+            break;
+        case GLP_NOFEAS:
+            printf("Le modèle n'a pas de solution faisable\n");
+            break;
+        case GLP_UNBND:
+            printf("Le modèle est non borné\n");
+            break;
+        default:
+            printf("Statut de la solution inconnu\n");
+            break;
+    }
+
+    if (sol_status == GLP_OPT || sol_status == GLP_FEAS) {
+        double z = glp_get_obj_val(lp);
+        printf("Valeur de la fonction objectif : %f\n", z);
+
+        for (int i = 1; i <= numVars; i++) {
+            double val = glp_get_col_prim(lp, i);
+            printf("Variable %d : %f\n", i, val);
+        }
+    }
 
     // Affichage des résultats.
     printf("\nEn prenant en compte les exclusions :\n");
