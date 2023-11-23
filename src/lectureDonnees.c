@@ -3,49 +3,49 @@
 //
 #include "sprog.h"
 
-t_exclusion* readExclusions(const char* filename, int* size) {
+t_regleExclusion * readExclusions(const char* filename, int* size) {
     FILE* file = fopen(filename, "r");
     if (file == NULL) {
         perror("Unable to open the file");
         exit(1);
     }
 
-    t_exclusion* exclusions = malloc(sizeof(t_exclusion) * 100); // Taille initiale
+    t_regleExclusion * regleExclusions = malloc(sizeof(t_regleExclusion ) * 100); // Taille initiale
     int count = 0;
 
-    while (fscanf(file, "%d %d", &exclusions[count].op1, &exclusions[count].op2) == 2) {
+    while (fscanf(file, "%d %d", &regleExclusions[count].op1, &regleExclusions[count].op2) == 2) {
         count++;
         if (count % 100 == 0) {
-            exclusions = realloc(exclusions, sizeof(t_exclusion) * (count + 100));
+            regleExclusions = realloc(regleExclusions, sizeof(t_regleExclusion ) * (count + 100));
         }
     }
 
     *size = count;
     fclose(file);
-    return exclusions;
+    return regleExclusions;
 }
 
 
-t_precedence* readPrecedences(const char* filename, int* size) {
+t_reglePrecedence * readPrecedences(const char* filename, int* size) {
     FILE* file = fopen(filename, "r");
     if (file == NULL) {
         perror("Unable to open the file");
         exit(1);
     }
 
-    t_precedence* precedences = malloc(sizeof(t_precedence) * 100);
+    t_reglePrecedence * reglePrecedences = malloc(sizeof(t_reglePrecedence) * 100);
     int count = 0;
 
-    while (fscanf(file, "%d %d", &precedences[count].op1, &precedences[count].op2) == 2) {
+    while (fscanf(file, "%d %d", &reglePrecedences[count].op1, &reglePrecedences[count].op2) == 2) {
         count++;
         if (count % 100 == 0) {
-            precedences = realloc(precedences, sizeof(t_precedence) * (count + 100));
+            reglePrecedences = realloc(reglePrecedences, sizeof(t_reglePrecedence ) * (count + 100));
         }
     }
 
     *size = count;
     fclose(file);
-    return precedences;
+    return reglePrecedences;
 }
 
 

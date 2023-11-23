@@ -5,8 +5,8 @@
 int main() {
     // Chargement des données
     int sizeExcl, sizePrec, sizeOps;
-    t_exclusion* exclusions = readExclusions("../Donnees/exclusions.txt", &sizeExcl);
-    t_precedence* precedences = readPrecedences("../Donnees/precedences.txt", &sizePrec);
+    t_regleExclusion * regleExclusions = readExclusions("../Donnees/exclusions.txt", &sizeExcl);
+    t_reglePrecedence * reglePrecedences = readPrecedences("../Donnees/precedences.txt", &sizePrec);
     t_operation* operations = readOperations("../Donnees/operations.txt", &sizeOps);
     float cycleTime = readCycleTime("../Donnees/temps_cycle.txt");
 
@@ -19,7 +19,8 @@ int main() {
         printf("2. Afficher les precedences\n");
         printf("3. Afficher les operations\n");
         printf("4. Afficher le temps de cycle\n");
-        printf("5. Quitter\n");
+        printf("5. Calculer le nombre de stations minimal\n");
+        printf("6. Quitter\n");
         printf("Votre choix : ");
         scanf("%d", &choice);
 
@@ -27,12 +28,12 @@ int main() {
         switch(choice) {
             case 1:
                 for (int i = 0; i < sizeExcl; i++) {
-                    printf("%d) Exclusion : %d - %d\n",i,exclusions[i].op1, exclusions[i].op2);
+                    printf("%d) Exclusion : %d - %d\n",i,regleExclusions[i].op1, regleExclusions[i].op2);
                 }
                 break;
             case 2:
                 for (int i = 0; i < sizePrec; i++) {
-                    printf("%d) Precedence : %d -> %d\n",i,precedences[i].op1, precedences[i].op2);
+                    printf("%d) Precedence : %d -> %d\n",i,reglePrecedences[i].op1, reglePrecedences[i].op2);
                 }
                 break;
             case 3:
@@ -44,16 +45,21 @@ int main() {
                 printf("Temps de cycle: %f\n", cycleTime);
                 break;
             case 5:
+                solveAssemblyLineProblem(cycleTime, sizeOps, operations, regleExclusions,sizeExcl);
+
+                break;
+            case 6:
                 printf("Quitter\n");
                 break;
             default:
                 printf("Choix invalide. Veuillez réessayer.\n");
         }
-    } while (choice != 5);
+    } while (choice != 6);
+
 
     // Libération de la mémoire
-    free(exclusions);
-    free(precedences);
+    free(regleExclusions);
+    free(reglePrecedences);
     free(operations);
 
     return 0;
