@@ -27,86 +27,88 @@ void configureGLPK(glp_smcp *smcp, glp_iocp *iocp) {
 }
 
 void solveAssemblyLineProblem(float cycleTime, int num_operations, t_operation* operations, t_regleExclusion* exclusions, int sizeExcl, glp_smcp *smcp, glp_iocp *iocp) {
+    // Création d'un nouveau problème linéaire.
     glp_prob *lp;
     lp = glp_create_prob();
+
+    // Définition du nom du problème et de la direction de l'objectif (minimisation).
     glp_set_prob_name(lp, "assembly_line");
     glp_set_obj_dir(lp, GLP_MIN);
 
-    // Variables
+    // Création des variables de décision. Chaque variable représente une opération dans une station.
     int numVars = num_operations * num_operations;
     glp_add_cols(lp, numVars);
     for (int i = 1; i <= num_operations; i++) {
         for (int j = 1; j <= num_operations; j++) {
-            int idx = (i - 1) * num_operations + j;
-            glp_set_col_kind(lp, idx, GLP_BV);
+            int idx = (i - 1) * num_operations + j; // Calcul de l'indice de la variable.
+            glp_set_col_kind(lp, idx, GLP_BV); // Définition de la variable comme binaire.
             char name[20];
-            sprintf(name, "x%d,%d", i, j);
+            sprintf(name, "x%d,%d", i, j); // Nommer la variable pour l'identification.
             glp_set_col_name(lp, idx, name);
-            // Objectif : minimiser le nombre de stations utilisées
-            glp_set_obj_coef(lp, idx, 1.0);
+            glp_set_obj_coef(lp, idx, 1.0); // Coefficient dans la fonction objectif (pour minimiser le nombre de stations).
         }
     }
 
-    // Contraintes d'exclusion
+    // Ajout des contraintes d'exclusion (deux opérations ne peuvent pas être dans la même station).
     for (int k = 0; k < sizeExcl; k++) {
         int op1 = exclusions[k].op1;
         int op2 = exclusions[k].op2;
         for (int j = 1; j <= num_operations; j++) {
-            int idx = glp_add_rows(lp, 1);
+            int idx = glp_add_rows(lp, 1); // Ajout d'une nouvelle contrainte pour chaque paire d'exclusion.
             glp_set_row_name(lp, idx, "exclusion");
-            glp_set_row_bnds(lp, idx, GLP_UP, 0.0, 1.0);
+            glp_set_row_bnds(lp, idx, GLP_UP, 0.0, 1.0); // La somme des variables pour cette paire ne doit pas dépasser 1.
             int ind[3] = {0, (op1 - 1) * num_operations + j, (op2 - 1) * num_operations + j};
-            double val[3] = {0, 1.0, 1.0};
-            glp_set_mat_row(lp, idx, 2, ind, val);
+            double val[3] = {0, 1.0, 1.0}; // Les coefficients des variables dans la contrainte.
+            glp_set_mat_row(lp, idx, 2, ind, val); // Définir la contrainte.
         }
     }
 
-    // Contraintes de temps de cycle
+    // Ajout des contraintes de temps de cycle (la somme des durées des opérations dans une station ne doit pas dépasser le temps de cycle).
     for (int j = 1; j <= num_operations; j++) {
         int idx = glp_add_rows(lp, 1);
         char name[20];
-        sprintf(name, "cycleTime%d", j);
+        sprintf(name, "cycleTime%d", j); // Nommer la contrainte de temps de cycle.
         glp_set_row_name(lp, idx, name);
-        glp_set_row_bnds(lp, idx, GLP_UP, 0.0, cycleTime);
+        glp_set_row_bnds(lp, idx, GLP_UP, 0.0, cycleTime); // La somme des durées ne doit pas dépasser cycleTime.
         int ind[num_operations + 1];
         double val[num_operations + 1];
         for (int i = 1; i <= num_operations; i++) {
-            ind[i] = (i - 1) * num_operations + j;
-            val[i] = operations[i - 1].duration;
+            ind[i] = (i - 1) * num_operations + j; // Index des variables.
+            val[i] = operations[i - 1].duration; // Durée de l'opération comme coefficient.
         }
-        glp_set_mat_row(lp, idx, num_operations, ind, val);
+        glp_set_mat_row(lp, idx, num_operations, ind, val); // Définir la contrainte de temps de cycle.
     }
 
-    // Résoudre le problème
-    glp_simplex(lp, smcp);  // Utiliser les paramètres configurés
-    glp_intopt(lp, iocp);   // Utiliser les paramètres configurés
+    // Résolution du problème linéaire et entier.
+    glp_simplex(lp, smcp);  // Résolution LP avec les paramètres configurés.
+    glp_intopt(lp, iocp);   // Résolution MIP avec les paramètres configurés.
 
-    // Afficher les résultats
+    // Affichage des résultats.
     printf("\nEn prenant en compte les exclusions :\n");
     for (int k = 0; k < sizeExcl; k++) {
-        printf("%s et %s\n", operations[exclusions[k].op1 - 1].name, operations[exclusions[k].op2 - 1].name);
+        printf("%s et %s\n", operations[exclusions[k].op1 - 1].name, operations[exclusions[k].op2 - 1].name); // Affichage des règles d'exclusion.
     }
 
     printf("\nPour un resultat minimal, les operations doivent etre agencees de cette façon :\n");
     int stationsUsed = 0;
     for (int j = 1; j <= num_operations; j++) {
-        int operationsInStation = 0;
+        int operationsInStation = 0; // Compte le nombre d'opérations dans une station.
         printf("Station %d :\n", j);
         for (int i = 1; i <= num_operations; i++) {
-            int idx = (i - 1) * num_operations + j;
-            if (glp_mip_col_val(lp, idx) == 1) {
-                printf("%s ", operations[i - 1].name);
+            int idx = (i - 1) * num_operations + j; // Index de la variable.
+            if (glp_mip_col_val(lp, idx) == 1) { // Vérifie si l'opération est assignée à cette station.
+                printf("%s ", operations[i - 1].name); // Affiche le nom de l'opération.
                 operationsInStation++;
             }
         }
         if (operationsInStation > 0) {
             printf("\n");
-            stationsUsed++;
+            stationsUsed++; // Incrémente le nombre de stations utilisées.
         }
     }
 
-    printf("Pour conclure, nous aurons donc besoin de minimum %d stations\n", stationsUsed);
+    printf("Pour conclure, nous aurons donc besoin de minimum %d stations\n", stationsUsed); // Affiche le nombre minimal de stations nécessaires.
 
-    // Libération de la mémoire
+    // Libération des ressources allouées pour le problème.
     glp_delete_prob(lp);
 }
