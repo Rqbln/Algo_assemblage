@@ -142,28 +142,31 @@ void solveAssemblyLineProblem(float cycleTime, int num_operations, t_operation* 
     for (int k = 0; k < sizeExcl; k++) {
         printf("%s et %s\n", operations[exclusions[k].op1 - 1].name, operations[exclusions[k].op2 - 1].name); // Affichage des règles d'exclusion.
     }
-
+    printf("\nEt le temps de cycle de %.2f seconde(s)\n",cycleTime);
     printf("\nPour un resultat minimal, les operations doivent etre agencees de cette façon :\n");
     int stationsUsed = 0;
     for (int j = 1; j <= num_operations; j++) {
         int operationsInStation = 0; // Compte le nombre d'opérations dans une station.
+        float totalTimeInStation = 0.0; // Pour calculer le temps total par station.
+
         for (int i = 1; i <= num_operations; i++) {
             int idx = (i - 1) * num_operations + j; // Index de la variable.
             if (glp_mip_col_val(lp, idx) == 1) { // Vérifie si l'opération est assignée à cette station.
                 if (operationsInStation == 0) {
-                    printf("Station %d :\n", j); // Affiche le nom de la station seulement si elle a des opérations.
-                    stationsUsed++; // Incrémente le nombre de stations utilisées.
+                    printf("Station %d :\n", j);
+                    stationsUsed++;
                 }
                 printf("%s ", operations[i - 1].name); // Affiche le nom de l'opération.
+                totalTimeInStation += operations[i - 1].duration; // Ajoute la durée de l'opération au total de la station.
                 operationsInStation++;
             }
         }
         if (operationsInStation > 0) {
-            printf("\n");
+            printf(" (Temps total: %.2f s)\n", totalTimeInStation); // Affiche le temps total de la station.
         }
     }
 
-    printf("Pour conclure, nous aurons donc besoin de minimum %d stations\n", stationsUsed); // Affiche le nombre minimal de stations nécessaires.
+    printf("Pour conclure, nous aurons donc besoin de minimum %d stations.\n", stationsUsed);
 
     // Libération des ressources allouées pour le problème.
     glp_delete_prob(lp);
