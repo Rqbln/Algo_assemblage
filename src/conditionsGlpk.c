@@ -35,7 +35,9 @@ void solveAssemblyLineProblem(float cycleTime, int num_operations, t_operation* 
     glp_set_obj_dir(lp, GLP_MIN);
 
     // Création des variables de décision. Chaque variable représente une opération dans une station.
+    printf("Nombre d'opérations : %d\n", num_operations);
     int numVars = num_operations * num_operations;
+    printf("Nombre total de variables (numVars) : %d\n", numVars);
     glp_add_cols(lp, numVars);
     for (int i = 1; i <= num_operations; i++) {
         for (int j = 1; j <= num_operations; j++) {
@@ -58,6 +60,10 @@ void solveAssemblyLineProblem(float cycleTime, int num_operations, t_operation* 
             glp_set_row_bnds(lp, idx, GLP_UP, 0.0, 1.0);
             int ind[3] = {0, (op1 - 1) * num_operations + j, (op2 - 1) * num_operations + j};
             double val[3] = {0, 1.0, 1.0};
+            // Vérification des indices
+            if (ind[1] > numVars || ind[2] > numVars) {
+                printf("Erreur d'indice : ind[1] = %d, ind[2] = %d, numVars = %d\n", ind[1], ind[2], numVars);
+            }
             glp_set_mat_row(lp, idx, 2, ind, val);
         }
     }
@@ -127,7 +133,7 @@ void solveAssemblyLineProblem(float cycleTime, int num_operations, t_operation* 
 
         for (int i = 1; i <= numVars; i++) {
             double val = glp_mip_col_val(lp, i); // Utilisez glp_mip_col_val pour les solutions MIP
-            printf("Variable MIP %d : %f\n", i, val);
+            //printf("Variable MIP %d : %f\n", i, val);
         }
     }
 
@@ -141,17 +147,19 @@ void solveAssemblyLineProblem(float cycleTime, int num_operations, t_operation* 
     int stationsUsed = 0;
     for (int j = 1; j <= num_operations; j++) {
         int operationsInStation = 0; // Compte le nombre d'opérations dans une station.
-        printf("Station %d :\n", j);
         for (int i = 1; i <= num_operations; i++) {
             int idx = (i - 1) * num_operations + j; // Index de la variable.
             if (glp_mip_col_val(lp, idx) == 1) { // Vérifie si l'opération est assignée à cette station.
+                if (operationsInStation == 0) {
+                    printf("Station %d :\n", j); // Affiche le nom de la station seulement si elle a des opérations.
+                    stationsUsed++; // Incrémente le nombre de stations utilisées.
+                }
                 printf("%s ", operations[i - 1].name); // Affiche le nom de l'opération.
                 operationsInStation++;
             }
         }
         if (operationsInStation > 0) {
             printf("\n");
-            stationsUsed++; // Incrémente le nombre de stations utilisées.
         }
     }
 
