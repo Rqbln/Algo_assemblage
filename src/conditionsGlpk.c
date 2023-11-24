@@ -143,8 +143,10 @@ void solveAssemblyLineProblem(float cycleTime, int num_operations, t_operation* 
         printf("%s et %s\n", operations[exclusions[k].op1 - 1].name, operations[exclusions[k].op2 - 1].name); // Affichage des règles d'exclusion.
     }
     printf("\nEt le temps de cycle de %.2f seconde(s)\n",cycleTime);
-    printf("\nPour un resultat minimal, les operations doivent etre agencees de cette façon :\n");
+    printf("\nPour un resultat minimal, les operations doivent etre agencees de cette facon :\n");
     int stationsUsed = 0;
+    float totalTimeAllStations = 0.0; // Pour calculer le temps total sur toutes les stations.
+
     for (int j = 1; j <= num_operations; j++) {
         int operationsInStation = 0; // Compte le nombre d'opérations dans une station.
         float totalTimeInStation = 0.0; // Pour calculer le temps total par station.
@@ -163,10 +165,12 @@ void solveAssemblyLineProblem(float cycleTime, int num_operations, t_operation* 
         }
         if (operationsInStation > 0) {
             printf(" (Temps total: %.2f s)\n", totalTimeInStation); // Affiche le temps total de la station.
+            totalTimeAllStations += totalTimeInStation; // Ajoute au temps total sur toutes les stations.
         }
     }
 
-    printf("Pour conclure, nous aurons donc besoin de minimum %d stations.\n", stationsUsed);
+    printf("Pour conclure, nous aurons donc besoin de minimum %d stations avec un temps total de %.2f secondes.\n", stationsUsed, totalTimeAllStations);
+
 
     // Libération des ressources allouées pour le problème.
     glp_delete_prob(lp);
