@@ -143,9 +143,17 @@ void solveAssemblyLineProblem(float cycleTime, int num_operations, t_operation* 
         printf("%s et %s\n", operations[exclusions[k].op1 - 1].name, operations[exclusions[k].op2 - 1].name); // Affichage des règles d'exclusion.
     }
     printf("\nEt le temps de cycle de %.2f seconde(s)\n",cycleTime);
-    printf("\nPour un resultat minimal, les operations doivent etre agencees de cette facon :\n");
+
+
+// Calcul du temps total si les opérations étaient effectuées séquentiellement
+    float totalTimeSequential = 0.0;
+    for (int i = 0; i < num_operations; i++) {
+        totalTimeSequential += operations[i].duration;
+    }
+
+    printf("\nPour un resultat minimal, les operations doivent etre agencees de cette façon :\n");
     int stationsUsed = 0;
-    float totalTimeAllStations = 0.0; // Pour calculer le temps total sur toutes les stations.
+    float totalTimeOptimized = 0.0; // Temps total sur toutes les stations avec l'optimisation.
 
     for (int j = 1; j <= num_operations; j++) {
         int operationsInStation = 0; // Compte le nombre d'opérations dans une station.
@@ -165,11 +173,14 @@ void solveAssemblyLineProblem(float cycleTime, int num_operations, t_operation* 
         }
         if (operationsInStation > 0) {
             printf(" (Temps total: %.2f s)\n", totalTimeInStation); // Affiche le temps total de la station.
-            totalTimeAllStations += totalTimeInStation; // Ajoute au temps total sur toutes les stations.
+            totalTimeOptimized += totalTimeInStation; // Ajoute au temps total optimisé.
         }
     }
 
-    printf("Pour conclure, nous aurons donc besoin de minimum %d stations avec un temps total de %.2f secondes.\n", stationsUsed, totalTimeAllStations);
+    float timeSaved = totalTimeSequential - totalTimeOptimized; // Calcul du temps gagné.
+
+    printf("Pour conclure, nous aurons donc besoin de minimum %d stations avec un temps total de %.2f secondes.\n", stationsUsed, totalTimeOptimized);
+    //printf("En effectuant chaque tâche à la chaîne, le temps total serait de %.2f secondes, d'où un gain de temps de %.2f secondes avec notre méthode.\n", totalTimeSequential, timeSaved);
 
 
     // Libération des ressources allouées pour le problème.
