@@ -102,39 +102,32 @@ void solveAssemblyLineProblem(float cycleTime, int num_operations, t_operation* 
     int simplex_status = glp_simplex(lp, smcp);
     if (simplex_status != 0) {
         printf("Problème lors de la résolution simplex : %d\n", simplex_status);
-        // Vous pouvez choisir de retourner ou de continuer, selon votre cas d'utilisation
+        // Gérer l'erreur
     }
 
-    // Vérification du statut de la solution
-    int sol_status = glp_get_status(lp);
+    int intopt_status = glp_intopt(lp, iocp);
+    if (intopt_status != 0) {
+        printf("Problème lors de la résolution d'optimisation entière mixte : %d\n", intopt_status);
+        // Gérer l'erreur
+    }
+
+// Vérification du statut de la solution pour MIP
+    int sol_status = glp_mip_status(lp); // Utilisez glp_mip_status pour les solutions MIP
     switch (sol_status) {
         case GLP_OPT:
-            printf("Solution optimale trouvée\n");
+            printf("Solution MIP optimale trouvée\n");
             break;
-        case GLP_FEAS:
-            printf("Solution faisable trouvée, mais non optimale\n");
-            break;
-        case GLP_INFEAS:
-            printf("Le modèle est non faisable\n");
-            break;
-        case GLP_NOFEAS:
-            printf("Le modèle n'a pas de solution faisable\n");
-            break;
-        case GLP_UNBND:
-            printf("Le modèle est non borné\n");
-            break;
-        default:
-            printf("Statut de la solution inconnu\n");
-            break;
+            // Ajouter d'autres cas si nécessaire
     }
 
-    if (sol_status == GLP_OPT || sol_status == GLP_FEAS) {
-        double z = glp_get_obj_val(lp);
-        printf("Valeur de la fonction objectif : %f\n", z);
+// Extraire les résultats pour les variables binaires
+    if (sol_status == GLP_OPT) {
+        double z = glp_mip_obj_val(lp); // Utilisez glp_mip_obj_val pour les solutions MIP
+        printf("Valeur de la fonction objectif MIP : %f\n", z);
 
         for (int i = 1; i <= numVars; i++) {
-            double val = glp_get_col_prim(lp, i);
-            printf("Variable %d : %f\n", i, val);
+            double val = glp_mip_col_val(lp, i); // Utilisez glp_mip_col_val pour les solutions MIP
+            printf("Variable MIP %d : %f\n", i, val);
         }
     }
 
