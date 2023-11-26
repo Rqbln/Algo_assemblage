@@ -11,6 +11,9 @@
 
 #endif //ALGO_ASSEMBLAGE_SPROG_H
 
+#define NUM_OPERATIONS 10  // Nombre total d'opérations
+#define CYCLE_TIME 10      // Temps de cycle (en secondes)
+
 typedef struct operation {
     char name[50];  // Nom de l'opération
     float duration; // Durée de l'opération
@@ -18,23 +21,28 @@ typedef struct operation {
 
 
 
-typedef struct exclusion{
+typedef struct regleExclusion{
     int op1;  // Première opération
     int op2;  // Deuxième opération
-} t_exclusion;
+} t_regleExclusion;
 
+typedef struct Exclusion{
+    int operationId;
+    int stationId;
+    int isActive; // 0 ou 1
+} t_Exclusion;
 
-typedef struct precedence{
+typedef struct reglePrecedence{
     int op1;
     int op2;
-} t_precedence;
+} t_reglePrecedence;
 
 
-void afficherMenu();
-void afficherMatrice(int **matrice, int nbLignes, int nbColonnes);
-
-t_exclusion* readExclusions(const char* filename, int* size);
-t_precedence* readPrecedences(const char* filename, int* size);
+t_regleExclusion* readExclusions(const char* filename, int* size);
+t_reglePrecedence* readPrecedences(const char* filename, int* size);
 t_operation* readOperations(const char* filename, int* size);
 float readCycleTime(const char* filename);
+
+void configureGLPK(glp_smcp *smcp, glp_iocp *iocp);
+void solveAssemblyLineProblem(float cycleTime, int num_operations, t_operation* operations, t_regleExclusion* exclusions, int sizeExcl, glp_smcp *smcp, glp_iocp *iocp);
 
