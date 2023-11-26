@@ -151,7 +151,7 @@ void solveAssemblyLineProblem(float cycleTime, int num_operations, t_operation* 
         totalTimeSequential += operations[i].duration;
     }
 
-    printf("\nPour un resultat minimal, les operations doivent etre agencees de cette façon :\n");
+    printf("\nPour un resultat minimal, les operations doivent etre agencees de cette facon :\n");
     int stationsUsed = 0;
     float totalTimeOptimized = 0.0; // Temps total sur toutes les stations avec l'optimisation.
 
