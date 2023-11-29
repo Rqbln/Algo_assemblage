@@ -44,5 +44,4 @@ t_operation* readOperations(const char* filename, int* size);
 float readCycleTime(const char* filename);
 
 void configureGLPK(glp_smcp *smcp, glp_iocp *iocp);
-void solveAssemblyLineProblem(float cycleTime, int num_operations, t_operation* operations, t_regleExclusion* exclusions, int sizeExcl, glp_smcp *smcp, glp_iocp *iocp);
-
+void solveAssemblyLineProblem(float cycleTime, int num_operations, t_operation* operations, t_regleExclusion* exclusions, t_reglePrecedence* precedences,int sizeExcl,int sizePrec, glp_smcp *smcp, glp_iocp *iocp);

@@ -3,20 +3,6 @@
 //
 #include "sprog.h"
 
-// Sous-programme pour initialiser la matrice d'exclusion
-t_Exclusion** initExclusionMatrix(int numOperations, int numStations) {
-    t_Exclusion** matrix = malloc(numOperations * sizeof(t_Exclusion*));
-    for (int i = 0; i < numOperations; i++) {
-        matrix[i] = malloc(numStations * sizeof(t_Exclusion));
-        for (int j = 0; j < numStations; j++) {
-            matrix[i][j].operationId = i + 1; // L'ID de l'opération, en commençant par 1
-            matrix[i][j].stationId = j + 1;   // L'ID de la station, en commençant par 1
-            matrix[i][j].isActive = 0;        // Initialisé à 0
-        }
-    }
-    return matrix;
-}
-
 void configureGLPK(glp_smcp *smcp, glp_iocp *iocp) {
     glp_init_smcp(smcp);
     smcp->msg_lev = GLP_MSG_ON; // Active les messages pour glp_simplex
@@ -25,7 +11,7 @@ void configureGLPK(glp_smcp *smcp, glp_iocp *iocp) {
     iocp->msg_lev = GLP_MSG_OFF; // Garde les messages désactivés pour glp_intopt
 }
 
-void solveAssemblyLineProblem(float cycleTime, int num_operations, t_operation* operations, t_regleExclusion* exclusions, int sizeExcl, glp_smcp *smcp, glp_iocp *iocp) {
+void solveAssemblyLineProblem(float cycleTime, int num_operations, t_operation* operations, t_regleExclusion* exclusions, t_reglePrecedence* precedences,int sizeExcl,int sizePrec, glp_smcp *smcp, glp_iocp *iocp) {
     // Création d'un nouveau problème linéaire.
     glp_prob *lp;
     lp = glp_create_prob();
@@ -50,6 +36,22 @@ void solveAssemblyLineProblem(float cycleTime, int num_operations, t_operation* 
         }
     }
 
+    // Contraintes de précédence
+    for (int k = 0; k < sizePrec; k++) {
+        int opPre = precedences[k].op1;  // Opération précédente
+        int opSub = precedences[k].op2;  // Opération subséquente
+        for (int j = 1; j < num_operations; j++) {  // Pour chaque station, sauf la dernière
+            for (int jp = j + 1; jp <= num_operations; jp++) {  // Pour chaque station après j
+                int idx = glp_add_rows(lp, 1);
+                glp_set_row_name(lp, idx, "precedence");
+                glp_set_row_bnds(lp, idx, GLP_UP, -1.0, 0.0);  // opPre dans j doit précéder opSub dans jp
+                int ind[3] = {0, (opPre - 1) * num_operations + j, (opSub - 1) * num_operations + jp};
+                double val[3] = {0, 1.0, -1.0};
+                glp_set_mat_row(lp, idx, 2, ind, val);
+            }
+        }
+    }
+
     // Ajout des contraintes d'exclusion (deux opérations ne peuvent pas être dans la même station).
     for (int k = 0; k < sizeExcl; k++) {
         int op1 = exclusions[k].op1;
@@ -67,6 +69,8 @@ void solveAssemblyLineProblem(float cycleTime, int num_operations, t_operation* 
             glp_set_mat_row(lp, idx, 2, ind, val);
         }
     }
+
+
 
 
     // Ajout des contraintes de temps de cycle (la somme des durées des opérations dans une station ne doit pas dépasser le temps de cycle).
@@ -136,14 +140,6 @@ void solveAssemblyLineProblem(float cycleTime, int num_operations, t_operation* 
             //printf("Variable MIP %d : %f\n", i, val);
         }
     }
-
-    // Affichage des résultats.
-    printf("\nEn prenant en compte les exclusions :\n");
-    for (int k = 0; k < sizeExcl; k++) {
-        printf("%s et %s\n", operations[exclusions[k].op1 - 1].name, operations[exclusions[k].op2 - 1].name); // Affichage des règles d'exclusion.
-    }
-    printf("\nEt le temps de cycle de %.2f seconde(s)\n",cycleTime);
-
 
 // Calcul du temps total si les opérations étaient effectuées séquentiellement
     float totalTimeSequential = 0.0;
