@@ -36,21 +36,24 @@ void solveAssemblyLineProblem(float cycleTime, int num_operations, t_operation* 
         }
     }
 
-    // Contraintes de précédence
+// Contraintes de précédence
     for (int k = 0; k < sizePrec; k++) {
         int opPre = precedences[k].op1;  // Opération précédente
         int opSub = precedences[k].op2;  // Opération subséquente
-        for (int j = 1; j < num_operations; j++) {  // Pour chaque station, sauf la dernière
-            for (int jp = j + 1; jp <= num_operations; jp++) {  // Pour chaque station après j
+        for (int j = 1; j <= num_operations; j++) {
+            for (int jp = 1; jp < j; jp++) {  // Pour chaque station avant j
                 int idx = glp_add_rows(lp, 1);
                 glp_set_row_name(lp, idx, "precedence");
-                glp_set_row_bnds(lp, idx, GLP_UP, -1.0, 0.0);  // opPre dans j doit précéder opSub dans jp
+                glp_set_row_bnds(lp, idx, GLP_UP, 0.0, 0.0);  // opSub ne peut pas être dans une station avant opPre
                 int ind[3] = {0, (opPre - 1) * num_operations + j, (opSub - 1) * num_operations + jp};
-                double val[3] = {0, 1.0, -1.0};
+                double val[3] = {0, 1.0, 1.0};
                 glp_set_mat_row(lp, idx, 2, ind, val);
             }
         }
     }
+
+
+
 
     // Ajout des contraintes d'exclusion (deux opérations ne peuvent pas être dans la même station).
     for (int k = 0; k < sizeExcl; k++) {
@@ -130,54 +133,67 @@ void solveAssemblyLineProblem(float cycleTime, int num_operations, t_operation* 
             // Ajouter d'autres cas si nécessaire
     }
 
-// Extraire les résultats pour les variables binaires
+// Après avoir trouvé la solution optimale
     if (sol_status == GLP_OPT) {
         double z = glp_mip_obj_val(lp); // Utilisez glp_mip_obj_val pour les solutions MIP
         printf("Valeur de la fonction objectif MIP : %f\n", z);
 
-        for (int i = 1; i <= numVars; i++) {
-            double val = glp_mip_col_val(lp, i); // Utilisez glp_mip_col_val pour les solutions MIP
-            //printf("Variable MIP %d : %f\n", i, val);
+        // Identifiez les stations utilisées
+        bool stationUsed[num_operations + 1];
+        for (int i = 0; i <= num_operations; i++) {
+            stationUsed[i] = false;
         }
-    }
-
-// Calcul du temps total si les opérations étaient effectuées séquentiellement
-    float totalTimeSequential = 0.0;
-    for (int i = 0; i < num_operations; i++) {
-        totalTimeSequential += operations[i].duration;
-    }
-
-    printf("\nPour un resultat minimal, les operations doivent etre agencees de cette facon :\n");
-    int stationsUsed = 0;
-    float totalTimeOptimized = 0.0; // Temps total sur toutes les stations avec l'optimisation.
-
-    for (int j = 1; j <= num_operations; j++) {
-        int operationsInStation = 0; // Compte le nombre d'opérations dans une station.
-        float totalTimeInStation = 0.0; // Pour calculer le temps total par station.
-
-        for (int i = 1; i <= num_operations; i++) {
-            int idx = (i - 1) * num_operations + j; // Index de la variable.
-            if (glp_mip_col_val(lp, idx) == 1) { // Vérifie si l'opération est assignée à cette station.
-                if (operationsInStation == 0) {
-                    printf("Station %d :\n", j);
-                    stationsUsed++;
-                }
-                printf("%s ", operations[i - 1].name); // Affiche le nom de l'opération.
-                totalTimeInStation += operations[i - 1].duration; // Ajoute la durée de l'opération au total de la station.
-                operationsInStation++;
+        for (int i = 1; i <= numVars; i++) {
+            if (glp_mip_col_val(lp, i) > 0.5) { // Si l'opération est assignée à cette station
+                int station = (i - 1) % num_operations + 1;
+                stationUsed[station] = true;
             }
         }
-        if (operationsInStation > 0) {
-            printf(" (Temps total: %.2f s)\n", totalTimeInStation); // Affiche le temps total de la station.
-            totalTimeOptimized += totalTimeInStation; // Ajoute au temps total optimisé.
+
+        // Créer un mappage des numéros de station
+        int stationMapping[num_operations + 1];
+        int currentStation = 1;
+        for (int j = 1; j <= num_operations; j++) {
+            if (stationUsed[j]) {
+                stationMapping[j] = currentStation++;
+            }
         }
+
+        // Calcul du temps total si les opérations étaient effectuées séquentiellement
+        float totalTimeSequential = 0.0;
+        for (int i = 0; i < num_operations; i++) {
+            totalTimeSequential += operations[i].duration;
+        }
+
+        printf("\nPour un resultat minimal, les operations doivent etre agencees de cette facon :\n");
+        float totalTimeOptimized = 0.0; // Temps total sur toutes les stations avec l'optimisation.
+
+        // Afficher les résultats avec les nouveaux numéros de station
+        for (int j = 1; j <= num_operations; j++) {
+            if (!stationUsed[j]) continue;
+
+            int operationsInStation = 0; // Compte le nombre d'opérations dans une station.
+            float totalTimeInStation = 0.0; // Pour calculer le temps total par station.
+
+            for (int i = 1; i <= num_operations; i++) {
+                int idx = (i - 1) * num_operations + j; // Index de la variable.
+                if (glp_mip_col_val(lp, idx) == 1) { // Vérifie si l'opération est assignée à cette station.
+                    if (operationsInStation == 0) {
+                        printf("Station %d :\n", stationMapping[j]);
+                    }
+                    printf("%s ", operations[i - 1].name); // Affiche le nom de l'opération.
+                    totalTimeInStation += operations[i - 1].duration; // Ajoute la durée de l'opération au total de la station.
+                    operationsInStation++;
+                }
+            }
+            if (operationsInStation > 0) {
+                printf(" (Temps total: %.2f s)\n", totalTimeInStation); // Affiche le temps total de la station.
+                totalTimeOptimized += totalTimeInStation; // Ajoute au temps total optimisé.
+            }
+        }
+
+        printf("Temps total optimisé : %.2f secondes (contre %.2f secondes en séquentiel).\n", totalTimeOptimized, totalTimeSequential);
     }
-
-    float timeSaved = totalTimeSequential - totalTimeOptimized; // Calcul du temps gagné.
-
-    printf("Pour conclure, nous aurons donc besoin de minimum %d stations avec un temps total de %.2f secondes.\n", stationsUsed, totalTimeOptimized);
-    //printf("En effectuant chaque tâche à la chaîne, le temps total serait de %.2f secondes, d'où un gain de temps de %.2f secondes avec notre méthode.\n", totalTimeSequential, timeSaved);
-
 
     // Libération des ressources allouées pour le problème.
     glp_delete_prob(lp);

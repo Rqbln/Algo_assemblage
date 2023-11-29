@@ -52,7 +52,7 @@ int main() {
                 printf("Temps de cycle: %f\n", cycleTime);
                 break;
             case 5:
-                solveAssemblyLineProblem(cycleTime, sizeOps, operations, regleExclusions, sizeExcl, &smcp, &iocp);
+                solveAssemblyLineProblem(cycleTime, sizeOps, operations, regleExclusions,reglePrecedences, sizeExcl,sizePrec, &smcp, &iocp);
 
                 break;
             case 6:
