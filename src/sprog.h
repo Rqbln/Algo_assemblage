@@ -5,7 +5,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <glpk.h>
-
+#include <stdbool.h>
+#include <string.h>
 #ifndef ALGO_ASSEMBLAGE_SPROG_H
 #define ALGO_ASSEMBLAGE_SPROG_H
 
