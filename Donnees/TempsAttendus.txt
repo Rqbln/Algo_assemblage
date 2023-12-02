@@ -1,0 +1,8 @@
+Temps de cycle et exclusions :
+- 3 stations (9,67s, 4,70s, 0,09s)
+
+Temps de cycle et précédences :
+- 2 stations (9,84s, 4,62s)
+
+Temps de cycle et exclusions et precedences :
+- 3 stations (6,13s, 7,80s, 0,53s)

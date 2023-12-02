@@ -36,23 +36,6 @@ void solveAssemblyLineProblem(float cycleTime, int num_operations, t_operation* 
         }
     }
 
-// Contraintes de précédence
-    for (int k = 0; k < sizePrec; k++) {
-        int opPre = precedences[k].op1;  // Opération précédente
-        int opSub = precedences[k].op2;  // Opération subséquente
-        for (int j = 1; j <= num_operations; j++) {
-            for (int jp = 1; jp < j; jp++) {  // Pour chaque station avant j
-                int idx = glp_add_rows(lp, 1);
-                glp_set_row_name(lp, idx, "precedence");
-                glp_set_row_bnds(lp, idx, GLP_UP, 0.0, 0.0);  // opSub ne peut pas être dans une station avant opPre
-                int ind[3] = {0, (opPre - 1) * num_operations + j, (opSub - 1) * num_operations + jp};
-                double val[3] = {0, 1.0, 1.0};
-                glp_set_mat_row(lp, idx, 2, ind, val);
-            }
-        }
-    }
-
-
 
 
     // Ajout des contraintes d'exclusion (deux opérations ne peuvent pas être dans la même station).
@@ -73,6 +56,24 @@ void solveAssemblyLineProblem(float cycleTime, int num_operations, t_operation* 
         }
     }
 
+
+// Contraintes de précédence
+    for (int k = 0; k < sizePrec; k++) {
+        int opPre = precedences[k].op1;  // Opération devant être effectuée en premier
+        int opSub = precedences[k].op2;  // Opération devant être effectuée ensuite
+
+        for (int j = 1; j <= num_operations; j++) {
+            int idx = glp_add_rows(lp, 1);
+            char row_name[50];
+            sprintf(row_name, "precedence_%d_station_%d", k, j);
+            glp_set_row_name(lp, idx, row_name);
+            glp_set_row_bnds(lp, idx, GLP_UP, -1.0, num_operations - j); // opPre doit être dans une station égale ou antérieure à opSub
+
+            int ind[3] = {0, (opPre - 1) * num_operations + j, (opSub - 1) * num_operations + j};
+            double val[3] = {0, -1.0, 1.0};
+            glp_set_mat_row(lp, idx, 2, ind, val);
+        }
+    }
 
 
 
