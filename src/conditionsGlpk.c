@@ -87,23 +87,15 @@ void solveAssemblyLineProblem(float cycleTime, int num_operations, t_operation* 
                 glp_set_row_name(lp, idx, row_name);
                 glp_set_row_bnds(lp, idx, GLP_UP, 0.0, 1.0);
 
-                int baseIndex, offset;
 
-                if (op1 < op2) {
-                    baseIndex = (op1 - 1) * num_operations * (num_operations - 1) / 2;
-                    offset = (op2 - op1 - 1) * num_operations;
-                } if (op1 > op2) {
-                    baseIndex = (op2 - 1) * num_operations * (num_operations - 1) / 2;
-                    offset = (op1 - op2 - 1) * num_operations;
-                }
+                int pairIndex = (op1 - 1) * num_operations + (op2 - 1);
+                int orderVarIndex = order_var_index + pairIndex * num_operations + j;
 
-                int orderVarIndex = order_var_index + baseIndex + offset + j;
-
-                // Vérifiez que orderVarIndex est dans la plage valide
+                // Vérifier que orderVarIndex est dans la plage valide
                 if (orderVarIndex < numVars + 1 || orderVarIndex > numVars + num_order_vars) {
-                    // Gestion de l'erreur : indice de variable d'ordre invalide
-                    continue;
+                    continue; // Indice de variable d'ordre invalide
                 }
+
 
                 int ind[4] = {0, (op1 - 1) * num_operations + j, (op2 - 1) * num_operations + j, orderVarIndex};
                 double val[4] = {0, 1.0, 1.0, -1.0};
@@ -120,32 +112,28 @@ void solveAssemblyLineProblem(float cycleTime, int num_operations, t_operation* 
         int opSub = precedences[k].op2;
 
         for (int j = 1; j <= num_operations; j++) {
-            // Contraintes pour différentes stations et la même station
             int idx1 = glp_add_rows(lp, 1);
             char row_name1[50];
             sprintf(row_name1, "precedence_%d_%d_station_%d", opPre, opSub, j);
             glp_set_row_name(lp, idx1, row_name1);
-            glp_set_row_bnds(lp, idx1, GLP_UP, 0.0, num_operations - j);
+            glp_set_row_bnds(lp, idx1, GLP_UP, 0.0, 0.0);  // Utilisez GLP_UP pour la borne supérieure
 
-            int baseIndex, offset;
-
+            int pairIndex;
             if (opPre < opSub) {
-                baseIndex = (opPre - 1) * num_operations * (num_operations - 1) / 2;
-                offset = (opSub - opPre - 1) * num_operations;
+                pairIndex = (opPre - 1) * num_operations + (opSub - 1);
             } else {
-                baseIndex = (opSub - 1) * num_operations * (num_operations - 1) / 2;
-                offset = (opPre - opSub - 1) * num_operations;
+                pairIndex = (opSub - 1) * num_operations + (opPre - 1);
             }
+            int orderVarIndex = order_var_index + pairIndex * num_operations + j;
 
-            int orderVarIndex = order_var_index + baseIndex + offset + j;
-
-            // Vérifiez que orderVarIndex est dans la plage valide
+// Vérifier que orderVarIndex est dans la plage valide
             if (orderVarIndex < numVars + 1 || orderVarIndex > numVars + num_order_vars) {
-                // Gestion de l'erreur : indice de variable d'ordre invalide
-                continue;
+                continue; // Indice de variable d'ordre invalide
             }
+
+
             int ind1[3] = {0, (opPre - 1) * num_operations + j, orderVarIndex};
-            double val1[3] = {0, -1.0, 1.0};
+            double val1[3] = {0, 1.0, -1.0};  // Assurez-vous que les valeurs sont correctement définies
             glp_set_mat_row(lp, idx1, 2, ind1, val1);
         }
     }
