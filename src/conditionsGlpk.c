@@ -56,24 +56,100 @@ void solveAssemblyLineProblem(float cycleTime, int num_operations, t_operation* 
         }
     }
 
+//Définition variables pour l'odre dans les stations
+    int num_pairs = (num_operations * (num_operations - 1)) / 2;
+    int num_order_vars = num_pairs * num_operations;
+    glp_add_cols(lp, numVars + num_order_vars); // Ajout des variables d'ordre au modèle existant
 
-// Contraintes de précédence
-    for (int k = 0; k < sizePrec; k++) {
-        int opPre = precedences[k].op1;  // Opération devant être effectuée en premier
-        int opSub = precedences[k].op2;  // Opération devant être effectuée ensuite
-
-        for (int j = 1; j <= num_operations; j++) {
-            int idx = glp_add_rows(lp, 1);
-            char row_name[50];
-            sprintf(row_name, "precedence_%d_station_%d", k, j);
-            glp_set_row_name(lp, idx, row_name);
-            glp_set_row_bnds(lp, idx, GLP_UP, -1.0, num_operations - j); // opPre doit être dans une station égale ou antérieure à opSub
-
-            int ind[3] = {0, (opPre - 1) * num_operations + j, (opSub - 1) * num_operations + j};
-            double val[3] = {0, -1.0, 1.0};
-            glp_set_mat_row(lp, idx, 2, ind, val);
+// Exemple d'initialisation des variables d'ordre
+    int order_var_index = numVars + 1; // L'index de départ pour les variables d'ordre
+    for (int i = 1; i <= num_operations; i++) {
+        for (int j = i + 1; j <= num_operations; j++) {
+            for (int k = 1; k <= num_operations; k++) {
+                int idx = order_var_index++;
+                glp_set_col_kind(lp, idx, GLP_BV); // Définition comme variable binaire
+                char name[20];
+                sprintf(name, "y%d,%d,%d", i, j, k);
+                glp_set_col_name(lp, idx, name);
+            }
         }
     }
+
+// Ajout des contraintes d'ordre
+    for (int op1 = 1; op1 <= num_operations; op1++) {
+        for (int op2 = 1; op2 <= num_operations; op2++) {
+            if (op1 == op2) continue; // Pas de contrainte d'ordre pour la même opération
+
+            for (int j = 1; j <= num_operations; j++) {
+                int idx = glp_add_rows(lp, 1);
+                char row_name[50];
+                sprintf(row_name, "order_%d_%d_station_%d", op1, op2, j);
+                glp_set_row_name(lp, idx, row_name);
+                glp_set_row_bnds(lp, idx, GLP_UP, 0.0, 1.0);
+
+                int baseIndex, offset;
+
+                if (op1 < op2) {
+                    baseIndex = (op1 - 1) * num_operations * (num_operations - 1) / 2;
+                    offset = (op2 - op1 - 1) * num_operations;
+                } if (op1 > op2) {
+                    baseIndex = (op2 - 1) * num_operations * (num_operations - 1) / 2;
+                    offset = (op1 - op2 - 1) * num_operations;
+                }
+
+                int orderVarIndex = order_var_index + baseIndex + offset + j;
+
+                // Vérifiez que orderVarIndex est dans la plage valide
+                if (orderVarIndex < numVars + 1 || orderVarIndex > numVars + num_order_vars) {
+                    // Gestion de l'erreur : indice de variable d'ordre invalide
+                    continue;
+                }
+
+                int ind[4] = {0, (op1 - 1) * num_operations + j, (op2 - 1) * num_operations + j, orderVarIndex};
+                double val[4] = {0, 1.0, 1.0, -1.0};
+                glp_set_mat_row(lp, idx, 3, ind, val);
+            }
+        }
+    }
+
+
+
+// Ajout des contraintes de précédence
+    for (int k = 0; k < sizePrec; k++) {
+        int opPre = precedences[k].op1;
+        int opSub = precedences[k].op2;
+
+        for (int j = 1; j <= num_operations; j++) {
+            // Contraintes pour différentes stations et la même station
+            int idx1 = glp_add_rows(lp, 1);
+            char row_name1[50];
+            sprintf(row_name1, "precedence_%d_%d_station_%d", opPre, opSub, j);
+            glp_set_row_name(lp, idx1, row_name1);
+            glp_set_row_bnds(lp, idx1, GLP_UP, 0.0, num_operations - j);
+
+            int baseIndex, offset;
+
+            if (opPre < opSub) {
+                baseIndex = (opPre - 1) * num_operations * (num_operations - 1) / 2;
+                offset = (opSub - opPre - 1) * num_operations;
+            } else {
+                baseIndex = (opSub - 1) * num_operations * (num_operations - 1) / 2;
+                offset = (opPre - opSub - 1) * num_operations;
+            }
+
+            int orderVarIndex = order_var_index + baseIndex + offset + j;
+
+            // Vérifiez que orderVarIndex est dans la plage valide
+            if (orderVarIndex < numVars + 1 || orderVarIndex > numVars + num_order_vars) {
+                // Gestion de l'erreur : indice de variable d'ordre invalide
+                continue;
+            }
+            int ind1[3] = {0, (opPre - 1) * num_operations + j, orderVarIndex};
+            double val1[3] = {0, -1.0, 1.0};
+            glp_set_mat_row(lp, idx1, 2, ind1, val1);
+        }
+    }
+
 
 
 

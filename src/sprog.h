@@ -27,22 +27,17 @@ typedef struct regleExclusion{
     int op2;  // Deuxième opération
 } t_regleExclusion;
 
-typedef struct Exclusion{
-    int operationId;
-    int stationId;
-    int isActive; // 0 ou 1
-} t_Exclusion;
-
 typedef struct reglePrecedence{
     int op1;
     int op2;
 } t_reglePrecedence;
 
+float readCycleTime(const char* filename);
 
 t_regleExclusion* readExclusions(const char* filename, int* size);
 t_reglePrecedence* readPrecedences(const char* filename, int* size);
 t_operation* readOperations(const char* filename, int* size);
-float readCycleTime(const char* filename);
+
 
 void configureGLPK(glp_smcp *smcp, glp_iocp *iocp);
 void solveAssemblyLineProblem(float cycleTime, int num_operations, t_operation* operations, t_regleExclusion* exclusions, t_reglePrecedence* precedences,int sizeExcl,int sizePrec, glp_smcp *smcp, glp_iocp *iocp);
