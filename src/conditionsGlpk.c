@@ -8,7 +8,7 @@ void configureGLPK(glp_smcp *smcp, glp_iocp *iocp) {
     smcp->msg_lev = GLP_MSG_ON; // Active les messages pour glp_simplex
 
     glp_init_iocp(iocp);
-    iocp->msg_lev = GLP_MSG_OFF; // Garde les messages désactivés pour glp_intopt
+    iocp->msg_lev = GLP_MSG_ON; // Garde les messages désactivés pour glp_intopt
 }
 
 void solveAssemblyLineProblem(float cycleTime, int num_operations, t_operation* operations, t_regleExclusion* exclusions, t_reglePrecedence* precedences,int sizeExcl,int sizePrec, glp_smcp *smcp, glp_iocp *iocp) {
@@ -37,7 +37,7 @@ void solveAssemblyLineProblem(float cycleTime, int num_operations, t_operation* 
     }
 
 
-// Définition du nombre total de variables d'ordre
+    // Définition du nombre total de variables d'ordre
     int num_order_vars = (num_operations * (num_operations - 1) / 2) * num_operations;
     glp_add_cols(lp, numVars + num_order_vars);
 
@@ -67,32 +67,26 @@ void solveAssemblyLineProblem(float cycleTime, int num_operations, t_operation* 
 // 'order_var_index' est l'index de départ pour ces variables d'ordre dans le modèle GLPK.
 // Les variables sont nommées 'yijk' où i et j sont les indices des opérations et k est l'indice de la station.
 
-// Ajout des contraintes d'ordre pour assurer que op1 est exécuté avant op2 dans la même station
+// Ajout des contraintes d'ordre pour assurer que op1 est exécuté avant op2
     for (int k = 0; k < sizePrec; k++) {
         int op1 = precedences[k].op1;
         int op2 = precedences[k].op2;
 
         for (int j = 1; j <= num_operations; j++) {
+            // Contrainte pour s'assurer que si op1 et op2 sont dans la même station j, alors op1 doit être exécuté avant op2
             int idx = glp_add_rows(lp, 1);
             char row_name[50];
             sprintf(row_name, "order_%d_before_%d_station_%d", op1, op2, j);
             glp_set_row_name(lp, idx, row_name);
-            glp_set_row_bnds(lp, idx, GLP_UP, 0.0, 1.0);
+            glp_set_row_bnds(lp, idx, GLP_LO, -1.0, 0.0); // Utilisation d'une borne inférieure
 
-            int orderVarIndex = order_var_index + (op1 - 1) * num_operations * (num_operations - 1) / 2 + (op2 - 1) * num_operations + j;
-
-            int ind[4] = {0, (op1 - 1) * num_operations + j, (op2 - 1) * num_operations + j, orderVarIndex};
-            double val[4] = {0, 1.0, 1.0, -1.0};
+            // Variables : x[op1,j], x[op2,j], y[op1,op2,j]
+            int ind[4] = {0, (op1 - 1) * num_operations + j, (op2 - 1) * num_operations + j, order_var_index + (op1 - 1) * num_operations * (num_operations - 1) / 2 + (op2 - 1) * num_operations + j};
+            double val[4] = {0, 1.0, -1.0, 1.0};
             glp_set_mat_row(lp, idx, 3, ind, val);
         }
     }
-// Cette boucle ajoute les contraintes de précédence au problème.
-// Pour chaque paire de précédence (op1, op2) spécifiée dans l'entrée,
-// et pour chaque station j, une contrainte est ajoutée pour assurer que si op2 est exécutée dans la station j,
-// alors op1 doit également être exécutée dans la même station avant op2 ou dans une station antérieure.
-// 'ind' contient les indices des variables dans le problème (op1, op2, et la variable d'ordre correspondante).
-// 'val' spécifie les coefficients pour ces variables dans la contrainte.
-// La contrainte est de type "borne supérieure", assurant que la somme des variables ne dépasse pas 1.
+
 
 
     // Ajout des contraintes d'exclusion (deux opérations ne peuvent pas être dans la même station).
@@ -229,7 +223,7 @@ void solveAssemblyLineProblem(float cycleTime, int num_operations, t_operation* 
             }
         }
 
-        printf("Temps total optimisé : %.2f secondes (contre %.2f secondes en séquentiel).\n", totalTimeOptimized, totalTimeSequential);
+        printf("Temps total : %.2f secondes\n", totalTimeOptimized);
     }
 
     // Libération des ressources allouées pour le problème.
