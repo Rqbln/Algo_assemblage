@@ -56,18 +56,19 @@ void solveAssemblyLineProblem(float cycleTime, int num_operations, t_operation* 
         }
     }
 
-//Définition variables pour l'odre dans les stations
-    int num_pairs = (num_operations * (num_operations - 1)) / 2;
-    int num_order_vars = num_pairs * num_operations;
-    glp_add_cols(lp, numVars + num_order_vars); // Ajout des variables d'ordre au modèle existant
 
-// Exemple d'initialisation des variables d'ordre
-    int order_var_index = numVars + 1; // L'index de départ pour les variables d'ordre
+// Définition du nombre total de variables d'ordre
+    int num_order_vars = (num_operations * (num_operations - 1) / 2) * num_operations;
+    glp_add_cols(lp, numVars + num_order_vars);
+
+// Initialisation des variables d'ordre
+    int order_var_index = numVars + 1;
     for (int i = 1; i <= num_operations; i++) {
-        for (int j = i + 1; j <= num_operations; j++) {
+        for (int j = 1; j <= num_operations; j++) {
+            if (i == j) continue; // Pas de variable d'ordre pour la même opération
             for (int k = 1; k <= num_operations; k++) {
-                int idx = order_var_index++;
-                glp_set_col_kind(lp, idx, GLP_BV); // Définition comme variable binaire
+                int idx = order_var_index + (i - 1) * num_operations * (num_operations - 1) / 2 + (j - 1) * num_operations + k;
+                glp_set_col_kind(lp, idx, GLP_BV);
                 char name[20];
                 sprintf(name, "y%d,%d,%d", i, j, k);
                 glp_set_col_name(lp, idx, name);
@@ -75,34 +76,6 @@ void solveAssemblyLineProblem(float cycleTime, int num_operations, t_operation* 
         }
     }
 
-// Ajout des contraintes d'ordre
-    for (int op1 = 1; op1 <= num_operations; op1++) {
-        for (int op2 = 1; op2 <= num_operations; op2++) {
-            if (op1 == op2) continue; // Pas de contrainte d'ordre pour la même opération
-
-            for (int j = 1; j <= num_operations; j++) {
-                int idx = glp_add_rows(lp, 1);
-                char row_name[50];
-                sprintf(row_name, "order_%d_%d_station_%d", op1, op2, j);
-                glp_set_row_name(lp, idx, row_name);
-                glp_set_row_bnds(lp, idx, GLP_UP, 0.0, 1.0);
-
-
-                int pairIndex = (op1 - 1) * num_operations + (op2 - 1);
-                int orderVarIndex = order_var_index + pairIndex * num_operations + j;
-
-                // Vérifier que orderVarIndex est dans la plage valide
-                if (orderVarIndex < numVars + 1 || orderVarIndex > numVars + num_order_vars) {
-                    continue; // Indice de variable d'ordre invalide
-                }
-
-
-                int ind[4] = {0, (op1 - 1) * num_operations + j, (op2 - 1) * num_operations + j, orderVarIndex};
-                double val[4] = {0, 1.0, 1.0, -1.0};
-                glp_set_mat_row(lp, idx, 3, ind, val);
-            }
-        }
-    }
 
 
 
@@ -118,26 +91,20 @@ void solveAssemblyLineProblem(float cycleTime, int num_operations, t_operation* 
             glp_set_row_name(lp, idx1, row_name1);
             glp_set_row_bnds(lp, idx1, GLP_UP, 0.0, 0.0);  // Utilisez GLP_UP pour la borne supérieure
 
-            int pairIndex;
-            if (opPre < opSub) {
-                pairIndex = (opPre - 1) * num_operations + (opSub - 1);
-            } else {
-                pairIndex = (opSub - 1) * num_operations + (opPre - 1);
-            }
+            // Inversion du calcul de pairIndex pour refléter la nouvelle logique de précédence
+            int pairIndex = (opSub - 1) * num_operations + (opPre - 1);
             int orderVarIndex = order_var_index + pairIndex * num_operations + j;
 
-// Vérifier que orderVarIndex est dans la plage valide
+            // Vérifier que orderVarIndex est dans la plage valide
             if (orderVarIndex < numVars + 1 || orderVarIndex > numVars + num_order_vars) {
                 continue; // Indice de variable d'ordre invalide
             }
 
-
-            int ind1[3] = {0, (opPre - 1) * num_operations + j, orderVarIndex};
-            double val1[3] = {0, 1.0, -1.0};  // Assurez-vous que les valeurs sont correctement définies
+            int ind1[3] = {0, (opSub - 1) * num_operations + j, orderVarIndex};
+            double val1[3] = {0, 1.0, -1.0};  // Ajustement des valeurs pour la nouvelle logique
             glp_set_mat_row(lp, idx1, 2, ind1, val1);
         }
     }
-
 
 
 
