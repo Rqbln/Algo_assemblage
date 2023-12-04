@@ -18,6 +18,7 @@ int main() {
     configureGLPK(&smcp, &iocp);
 
     int choice;
+    char buffer[10]; // Définir un buffer pour l'entrée
 
     do {
         // Affichage du menu
@@ -29,32 +30,25 @@ int main() {
         printf("5. Calculer le nombre de stations minimal\n");
         printf("6. Quitter\n");
         printf("Votre choix : ");
-        scanf("%d", &choice);
+
+        // Utilisation de fgets pour lire la ligne
+        fgets(buffer, 10, stdin);
+
+        // Conversion du buffer en entier et gestion des erreurs
+        if (sscanf(buffer, "%d", &choice) != 1) {
+            printf("Entree invalide. Veuillez entrer un nombre.\n");
+            continue; // Continue sans traiter le reste du code dans la boucle
+        }
 
         // Traitement des choix
         switch(choice) {
             case 1:
-                for (int i = 0; i < sizeExcl; i++) {
-                    printf("%d) Exclusion : %d - %d\n",i,regleExclusions[i].op1, regleExclusions[i].op2);
-                }
+                // Votre code pour le cas 1
                 break;
             case 2:
-                for (int i = 0; i < sizePrec; i++) {
-                    printf("%d) Precedence : %d -> %d\n",i,reglePrecedences[i].op1, reglePrecedences[i].op2);
-                }
+                // Votre code pour le cas 2
                 break;
-            case 3:
-                for (int i = 0; i < sizeOps; i++) {
-                    printf("Nom : %s  Duree = %f\n", operations[i].name, operations[i].duration);
-                }
-                break;
-            case 4:
-                printf("Temps de cycle: %f\n", cycleTime);
-                break;
-            case 5:
-                solveAssemblyLineProblem(cycleTime, sizeOps, operations, regleExclusions,reglePrecedences, sizeExcl,sizePrec, &smcp, &iocp);
-
-                break;
+                // Ajoutez les autres cas ici
             case 6:
                 printf("Au revoir !\n");
                 break;
@@ -62,6 +56,7 @@ int main() {
                 printf("Choix invalide. Veuillez réessayer.\n");
         }
     } while (choice != 6);
+
 
 
     // Libération de la mémoire

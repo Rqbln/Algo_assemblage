@@ -89,23 +89,44 @@ void solveAssemblyLineProblem(float cycleTime, int num_operations, t_operation* 
 
 
 
-    // Ajout des contraintes d'exclusion (deux opérations ne peuvent pas être dans la même station).
+// Boucle sur toutes les règles d'exclusion
     for (int k = 0; k < sizeExcl; k++) {
+        // Récupère les indices des opérations qui ne doivent pas être dans la même station
         int op1 = exclusions[k].op1;
         int op2 = exclusions[k].op2;
+
+        // Boucle sur toutes les stations possibles
         for (int j = 1; j <= num_operations; j++) {
+            // Ajoute une nouvelle contrainte au modèle linéaire
             int idx = glp_add_rows(lp, 1);
+
+            // Définit le nom de la contrainte pour faciliter l'identification et le débogage
             glp_set_row_name(lp, idx, "exclusion");
+
+            // Définit les bornes de la contrainte.
+            // GLP_UP signifie que la somme des variables concernées ne doit pas dépasser 1.0,
+            // ce qui garantit que les deux opérations ne sont pas assignées à la même station.
             glp_set_row_bnds(lp, idx, GLP_UP, 0.0, 1.0);
+
+            // Prépare les indices des variables concernées par cette contrainte.
+            // Ces indices correspondent aux variables qui représentent si op1 et op2 sont dans la station j.
             int ind[3] = {0, (op1 - 1) * num_operations + j, (op2 - 1) * num_operations + j};
+
+            // Définit les coefficients des variables dans la contrainte.
+            // Un coefficient de 1.0 pour chaque variable indique que la somme des variables ne doit pas dépasser 1.
             double val[3] = {0, 1.0, 1.0};
-            // Vérification des indices
+
+            // Vérifie que les indices des variables sont dans la plage correcte,
+            // ce qui est crucial pour éviter les erreurs d'exécution.
             if (ind[1] > numVars || ind[2] > numVars) {
                 printf("Erreur d'indice : ind[1] = %d, ind[2] = %d, numVars = %d\n", ind[1], ind[2], numVars);
             }
+
+            // Ajoute la contrainte au modèle avec les indices et les coefficients spécifiés.
             glp_set_mat_row(lp, idx, 2, ind, val);
         }
     }
+
 
     // Ajout des contraintes de temps de cycle (la somme des durées des opérations dans une station ne doit pas dépasser le temps de cycle).
     for (int j = 1; j <= num_operations; j++) {
