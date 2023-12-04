@@ -37,6 +37,63 @@ void solveAssemblyLineProblem(float cycleTime, int num_operations, t_operation* 
     }
 
 
+// Définition du nombre total de variables d'ordre
+    int num_order_vars = (num_operations * (num_operations - 1) / 2) * num_operations;
+    glp_add_cols(lp, numVars + num_order_vars);
+
+// Cette partie du code calcule le nombre total de variables d'ordre nécessaires.
+// Pour chaque paire d'opérations (sauf les paires où les opérations sont identiques),
+// et pour chaque station, une variable d'ordre est créée.
+// Ces variables d'ordre serviront à indiquer si une opération est effectuée avant une autre dans la même station.
+// Puis, ce nombre est utilisé pour ajouter les colonnes correspondantes au problème GLPK.
+
+// Initialisation des variables d'ordre
+    int order_var_index = numVars + 1;
+    for (int i = 1; i <= num_operations; i++) {
+        for (int j = 1; j <= num_operations; j++) {
+            if (i == j) continue; // Pas de variable d'ordre pour la même opération
+            for (int k = 1; k <= num_operations; k++) {
+                int idx = order_var_index + (i - 1) * num_operations * (num_operations - 1) / 2 + (j - 1) * num_operations + k;
+                glp_set_col_kind(lp, idx, GLP_BV);
+                char name[20];
+                sprintf(name, "y%d,%d,%d", i, j, k);
+                glp_set_col_name(lp, idx, name);
+            }
+        }
+    }
+
+// Ici, on initialise les variables d'ordre. Pour chaque paire d'opérations distinctes (i et j) et chaque station (k),
+// une variable binaire est créée pour déterminer si l'opération i précède l'opération j dans la station k.
+// 'order_var_index' est l'index de départ pour ces variables d'ordre dans le modèle GLPK.
+// Les variables sont nommées 'yijk' où i et j sont les indices des opérations et k est l'indice de la station.
+
+// Ajout des contraintes d'ordre pour assurer que op1 est exécuté avant op2 dans la même station
+    for (int k = 0; k < sizePrec; k++) {
+        int op1 = precedences[k].op1;
+        int op2 = precedences[k].op2;
+
+        for (int j = 1; j <= num_operations; j++) {
+            int idx = glp_add_rows(lp, 1);
+            char row_name[50];
+            sprintf(row_name, "order_%d_before_%d_station_%d", op1, op2, j);
+            glp_set_row_name(lp, idx, row_name);
+            glp_set_row_bnds(lp, idx, GLP_UP, 0.0, 1.0);
+
+            int orderVarIndex = order_var_index + (op1 - 1) * num_operations * (num_operations - 1) / 2 + (op2 - 1) * num_operations + j;
+
+            int ind[4] = {0, (op1 - 1) * num_operations + j, (op2 - 1) * num_operations + j, orderVarIndex};
+            double val[4] = {0, 1.0, 1.0, -1.0};
+            glp_set_mat_row(lp, idx, 3, ind, val);
+        }
+    }
+// Cette boucle ajoute les contraintes de précédence au problème.
+// Pour chaque paire de précédence (op1, op2) spécifiée dans l'entrée,
+// et pour chaque station j, une contrainte est ajoutée pour assurer que si op2 est exécutée dans la station j,
+// alors op1 doit également être exécutée dans la même station avant op2 ou dans une station antérieure.
+// 'ind' contient les indices des variables dans le problème (op1, op2, et la variable d'ordre correspondante).
+// 'val' spécifie les coefficients pour ces variables dans la contrainte.
+// La contrainte est de type "borne supérieure", assurant que la somme des variables ne dépasse pas 1.
+
 
     // Ajout des contraintes d'exclusion (deux opérations ne peuvent pas être dans la même station).
     for (int k = 0; k < sizeExcl; k++) {
@@ -55,52 +112,6 @@ void solveAssemblyLineProblem(float cycleTime, int num_operations, t_operation* 
             glp_set_mat_row(lp, idx, 2, ind, val);
         }
     }
-
-
-// Définition du nombre total de variables d'ordre
-    int num_order_vars = (num_operations * (num_operations - 1) / 2) * num_operations;
-    glp_add_cols(lp, numVars + num_order_vars);
-
-// Initialisation des variables d'ordre
-    int order_var_index = numVars + 1;
-    for (int i = 1; i <= num_operations; i++) {
-        for (int j = 1; j <= num_operations; j++) {
-            if (i == j) continue; // Pas de variable d'ordre pour la même opération
-            for (int k = 1; k <= num_operations; k++) {
-                int idx = order_var_index + (i - 1) * num_operations * (num_operations - 1) / 2 + (j - 1) * num_operations + k;
-                glp_set_col_kind(lp, idx, GLP_BV);
-                char name[20];
-                sprintf(name, "y%d,%d,%d", i, j, k);
-                glp_set_col_name(lp, idx, name);
-            }
-        }
-    }
-
-// Ajout des contraintes d'ordre pour assurer que op1 est exécuté avant op2 dans la même station
-    for (int k = 0; k < sizePrec; k++) {
-        int op1 = precedences[k].op1;
-        int op2 = precedences[k].op2;
-
-        for (int j = 1; j <= num_operations; j++) {
-            int idx = glp_add_rows(lp, 1);
-            char row_name[50];
-            sprintf(row_name, "order_%d_before_%d_station_%d", op1, op2, j);
-            glp_set_row_name(lp, idx, row_name);
-            glp_set_row_bnds(lp, idx, GLP_UP, 0.0, 1.0);
-
-            // Utiliser la même formule pour l'indexation des variables d'ordre que celle utilisée pour leur initialisation
-            int orderVarIndex = order_var_index + (op1 - 1) * num_operations * (num_operations - 1) / 2 + (op2 - 1) * num_operations + j;
-
-            int ind[4] = {0, (op1 - 1) * num_operations + j, (op2 - 1) * num_operations + j, orderVarIndex};
-            double val[4] = {0, 1.0, 1.0, -1.0};
-            glp_set_mat_row(lp, idx, 3, ind, val);
-        }
-    }
-
-
-
-
-
 
     // Ajout des contraintes de temps de cycle (la somme des durées des opérations dans une station ne doit pas dépasser le temps de cycle).
     for (int j = 1; j <= num_operations; j++) {
